@@ -17,6 +17,7 @@
 require 'core/point'
 include Inox
 
+
 describe Point do
  
   

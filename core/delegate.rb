@@ -57,6 +57,8 @@ module Inox
             def \#{sym}=(p)
               if p.kind_of?(Proc) or p.kind_of?(Method) then
                 self.set_action("\#{sym}".to_sym, p)
+              elsif p.nil?
+                self.set_action("\#{sym}".to_sym, nil)
               else
                 raise "Proc or Method expected"    
               end

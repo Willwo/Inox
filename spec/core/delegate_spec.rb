@@ -123,4 +123,10 @@ describe TestClass do
     @test_class.foo = @test_controller.method(:returnClass)
     @test_class.foo.should be(TestController)
   end
+  
+  it "should unset the action if assigned nil" do
+    @test_class.foo { "Hello" }
+    @test_class.foo = nil
+    @test_class.foo.should == nil
+  end
 end
