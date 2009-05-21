@@ -55,15 +55,14 @@ end
 
 
 desc 'Install the gem file' 
-task 'gem/install' => [:clean, :gem] do
+task 'gem/install' => [:clean, 'gem/uninstall', :gem] do
   `gem install pkg/inox-0.0.1.gem`
 end
 
 
 desc 'Unnstall the gem file' 
 task 'gem/uninstall' do
-  res = `gem list -d inox`
-  `gem uninstall inox` if res.empty?
+  `gem uninstall inox`
 end
 
 ###############################################################################
@@ -96,9 +95,8 @@ task :examples do
   puts 'hello'
 end
 
-task 'examples/hello' => :gem do
-
-  require 'examples/helloworld/helloworld.rb'
+task 'examples/hello' do
+  `ruby -I"#{File.dirname(__FILE__)}/}" 'examples/helloworld/helloworld.rb'`
 end
 
 # task :default => :helloworld

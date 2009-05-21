@@ -17,115 +17,185 @@
 #++
 
 module Inox
-
-
   module Properties
-
-    class Property < Hash
-      def name(*arg)
-        if arg.empty?
-          return self[:name]
-        elsif arg.length == 1 and arg[0].kind_of?(Symbol)
-          self[:name] = arg[0] 
-          return nil
-        else
-          raise "Symbol expect for Property.name"
-        end
-      end  
-
-      def default(*arg)
-        if arg.empty?
-          return self[:default] 
-        elsif arg.length == 1
-          self[:default] = arg[0]
-          return nil
-        else
-          raise "Zero or one argument expected"
-        end
-      end
-
-      def access(*arg)
-        return self[:access] if arg.empty?
-        self[:access] = arg[0] if arg.length == 1 and 
-        arg[0].kind_of?(Symbol) and (
-        arg[0] == :read or 
-        arg[0] == :write or 
-        arg[0] == :readwrite)
-        nil
-      end
-
-      def read
-        self.access(:read)
-      end
-      
-      def read?
-        self.access == :read or 
-        self.access == :readwrite
-      end
-
-      def write
-        self.access(:write)
-      end
-      
-      def write?
-        self.access == :write or 
-        self.access == :readwrite
-      end
-
-      def readwrite
-        self.access(:readwrite)
-      end
-      
-      def value(*arg)
-        if arg.empty?
-          return self[:value]
-        elsif arg.length == 1
-          self[:value] = arg[0]
-        else
-          raise "Zero or one argument expected"
-        end
-      end
-    end
-
-
     def self.included(base)
-      class << base
-        attr_accessor :properties
+      # add class definitions
+      with(base.meta_class) { include ClassMethods }
 
-        def property(&block)
-          p = Property.new
-          p.instance_eval(&block)
-          self.properties[p.name] = p
-          p
-        end
-
-        def properties(&block)
-          @properties ||= Hash.new
-          return @properties if block.nil?
-          class << self
-            def self.method_missing(m, &block)
-              p = Property.new
-              p.instance_eval(&block)
-              p.name(m)
-              @obj.properties[p.name] = p
-              p
-            end
-
-            def self.magic_eval(obj, &block)
-              @obj = obj
-              self.instance_eval(&block)
-            end
-
-            self
-          end.magic_eval(self, &block)
-
-        end
-
-        def inherited(subclass)
-          subclass.properties = self.properties.clone
-        end        
-      end        
+      # add instance definitions
+      with(base) { include InstanceMethods }
     end
-  end
 
-end 
+    ##########
+    # Class Methods
+    ##########   
+    module ClassMethods
+      attr_accessor :properties
+
+      def has_properties?; true; end
+      def has_property?(sym); properties.include? sym; end
+
+      def properties(&block)
+        @properties ||= Hash.new
+        return @properties if block.nil?
+
+        with meta_class do
+          def self.method_missing(m, &b)
+            @obj.add_property with(Property.new(m), &b)
+          end
+
+          def self.magic_eval(obj, &b)
+            @obj = obj
+            with(self, &b)
+          end
+
+          self
+        end.magic_eval(self, &block)
+      end
+
+      def add_property(p)
+        assert2(p).kind_of?(Property).and(self).not.has_property?(p.name).end
+        properties[p.name] = p
+
+        self.class_eval %{
+          def #{p.name}(*arg)
+            assert2(arg).empty?.or.length.eql?(1).end
+            return property_get("#{p.name}".to_sym) if arg.empty?
+            property_set("#{p.name}".to_sym, arg[0])
+          end
+
+          def #{p.name}=(p); property_set("#{p.name}".to_sym, p); end
+        }
+
+        property_added p
+      end
+
+      def define_property(name, type = Object, access = :readwrite, default = nil)
+        add_property Property.new(name, type,access, default)
+      end
+      alias property define_property
+
+
+      def remove_property(name)
+        p = properties.delete(name)
+        unless p.nil?
+          with self do
+            remove_method names
+            remove_method "#{name}=".to_sym
+          end
+          property_removed v
+        end
+      end
+
+      #call back
+      def property_added(p); end
+      def property_removed(p); end
+
+      def inherited(sub)
+        sub.properties = properties.clone if has_properties?
+        sub.actions = actions.clone if has_actions?
+      end        
+    end # ClassMethods
+
+
+    ##########
+    # Instance methods
+    ##########   
+    module InstanceMethods
+
+      def property_get(sym)
+        property_missing(sym) unless self.class.has_property?(sym)
+
+        if self.respond_to?("get_#{sym}".to_sym)
+          send "get_#{sym}".to_sym
+        else
+          res = properties[sym]
+          return res.nil? ? self.class.properties[sym].default : res
+        end
+      end
+
+      def property_set(sym, value)
+        property_missing(sym) unless self.class.has_property?(sym)
+
+        if self.respond_to?("set_#{sym}".to_sym)          
+          send "set_#{sym}".to_sym, value
+        else
+          properties[sym] = value
+        end
+      end
+
+      def property_set!(sym, value)
+        property_missing(sym) unless self.class.has_property?(sym)        
+        properties[sym] = value
+      end
+
+      protected
+
+      def properties; (@properties ||= Hash.new); end
+      def property_missing(sym)
+        raise "Property #{sym} not defined"
+      end
+
+    end    
+
+  end # Module Properties
+
+  # A class for representing propreties and their attributes
+  class Property < Hash
+
+    def initialize(aname = :New_Property, atype = Object, anaccess = :readwrite, adefault = nil)
+      self.name, self.type, self.access, self.default = aname, atype, anaccess, adefault
+    end
+
+    def name=(v); name v; end
+    def name(*arg)
+      assert2(arg).empty?.or { length.eql?(1).and.at(0).kind_of?(Symbol) }.end
+
+      return self[:name] if arg.empty?
+      self[:name]=arg[0]        
+    end  
+
+
+    def type=(v); self[:type] = v; end
+    def type(*arg)
+      assert2(arg).empty?.or { length.eql?(1).and.at(0).kind_of?(Class) }.end
+
+      return self[:type] if arg.empty?
+      self.type = arg[0]
+    end
+
+    def default=(v); self.default(v); end
+    def default(*arg)
+      assert2(arg).empty?.or.length.eql?(1).end
+
+      return self[:default] if arg.empty?
+      self[:default] = arg[0]
+    end
+
+    def access=(v); self[:access] = v; end
+    def access(*arg)
+      assert2(arg).empty?.or.length.eql?(1).and.at(0)._{ 
+        eql?(:read).or.eql?(:write).or.eql?(:readwrite) 
+      }.end
+
+      return self[:access] if arg.empty?
+      self.access = arg[0] 
+      end
+
+      # some syntatic sugar
+      def read; access(:read); end
+      def read?; access == :read or access == :readwrite; end
+      def write; access(:write); end
+      def write?; access == :write or access == :readwrite; end
+      def readwrite; access(:readwrite); end
+
+    end # Class Properties
+
+  end # Module Inox
+
+
+  # added a default method the Object for introspection
+  class Object
+    def self.has_properties?; false; end
+    def has_properties?; self.class.has_properties?; end
+  end

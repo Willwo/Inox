@@ -15,12 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
-require 'core/point'
-require 'core/size'
+
+IX::import IX::source_file('core/point')
+IX::import IX::source_file('core/size')
 
 module Inox
   class Rect
     attr_accessor :origin, :size
+    
+    def self.zero
+      [0,0,0,0].to_rect
+    end
     
     def initialize(*args)
       @origin = (((o = args[0..1]).nil? ? [] : o).empty? ? [0,0] : o).to_point
@@ -53,52 +58,21 @@ module Inox
       end
     end
     
-    def to_a
-      [@origin.x, @origin.y, @size.width, @size.height]
-    end
-    
-    def to_rect
-      self
-    end
-    
-    def left
-      self.origin.x
-    end
-
-    def left=(i)
-      self.origin.x = i
-    end
-
-    def right
-      self.origin.x + self.size.width
-    end
-
-    def right=(i)
-      self.origin.x = i - self.size.width
-    end
-
-    def top
-      self.origin.y
-    end
-
-    def top=(i)
-      self.origin.y = i
-    end
-
-    def bottom
-      self.origin.y + self.size.height
-    end
-
-    def bottom=(i)
-      self.origin.y = i - self.size.height
-    end
-    
+    def to_a; [@origin.x, @origin.y, @size.width, @size.height]; end
+    def to_rect; self; end
+    def left; self.origin.x; end
+    def left=(i); self.origin.x = i; end
+    def right; self.origin.x + self.size.width; end
+    def right=(i); self.origin.x = i - self.size.width; end
+    def top; self.origin.y; end
+    def top=(i); self.origin.y = i; end
+    def bottom; self.origin.y + self.size.height; end
+    def bottom=(i); self.origin.y = i - self.size.height; end
     def center
       cx = self.origin.x + (self.size.width / 2)
       cy = self.origin.y + (self.size.height / 2)
       return [cx, cy].to_point 
-    end
-    
+    end    
     def center=(obj)
       p = obj.to_point
       self.origin.x = p.x - (self.size.width/2)

@@ -16,19 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
-
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+IX::import IX::source_file('toolkit/pre_code/container_base.rb')
 
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+module Inox
+  class WindowBase < ContainerBase
+  
+    properties {
+      title { type String; default "Inox Window" }
+    }
+    
+    def initialize(*args, &block)
+      super(*args, &block)
+      self.frame = [0,0,640,480]
+      self.align_center!
+    end
+  end
+end

@@ -16,19 +16,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+module Inox
+  # A Visual Component
+  class WidgetBase < Component
+    properties {
+      frame { type Rect; readwrite; default [32,32,32,32].to_rect }
+      visible { type Object; readwrite; default false }
+    }
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+    actions :frame_changed
 
+    def align_center!
+      unless parent.nil?
+        self.frame.center = parent.frame.center
+        frame_changed
+      end
+    end
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
+    def set_frame(obj)
+      if obj.respond_to?(:to_rect)
+        property_set!(:frame, obj.to_rect)
+        frame_changed
+      else
+        raise "Cannot assing #{obj} to frame kind_of? Rect expected"
+      end
+    end
 
+  end
+end

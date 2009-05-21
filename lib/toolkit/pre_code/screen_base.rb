@@ -15,20 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
+IX::import IX::source_file('toolkit/pre_code/widget_base.rb')
 
-
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
-
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+module Inox
+  class ScreenBase < WidgetBase
+    include Singleton
+  end
+end

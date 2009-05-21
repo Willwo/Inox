@@ -15,20 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
+IX::import IX::source_file('toolkit/pre_code/container_base.rb')
 
+module Inox
+  class ApplicationBase < ContainerBase
+    include Singleton
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+    properties {
+      title { type String; readwrite; default 'Inox Application' }
+    }
 
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+    def initialize(*args, &block)
+      super(*args, &block)
+      self.parent = Screen.instance()
+      self.frame = self.parent.frame
+    end
+    
+    def child_removed!(obj)
+      dispose if children.length == 0
+    end
+  end
+end

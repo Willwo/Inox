@@ -16,19 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
-
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
-
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+module Inox
+  class Screen < ScreenBase
+    def create!
+      super
+      self.frame = OSX::NSScreen.mainScreen.frame
+    end
+  end
+end

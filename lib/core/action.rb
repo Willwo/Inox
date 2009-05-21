@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
+IX::import IX::source_file('core/compat/debug.rb')
+
 module Inox
 
   # When included into a class, creates the default behavior as follow:
@@ -34,112 +36,156 @@ module Inox
   #
   # 
   module Actions
+    def self.included(base)
+      # add class methods
+      with base do
+        extend ClassMethods
+      end
 
-    # add class methods: action, actions
-    def self.included(othermod)
-      class << othermod
-        attr_accessor :actions
-        
-        def actions(*args)
-          if args.empty?
-            @actions ||= []
-            @actions
-          else
-            args.each { |a| self.action(a) }
+      # add instance methods
+      with base do
+        include InstanceMethods
+      end
+    end
+
+
+    ##########
+    # Class methods
+    ##########    
+    module ClassMethods
+      attr_accessor :actions
+
+      def has_actions?; true; end
+      def has_action?(sym); self.actions.include?(sym); end
+
+      def actions(*args)
+        return @actions ||= [] if args.empty?
+        args.each { |a| self.define_action(a) }
+      end
+
+
+      def define_action(sym)
+        assert2(self.actions).not.include?(sym).end
+
+        self.actions << sym
+
+        self.class_eval %{
+          def #{"on_#{sym}".to_sym}(&block)
+            self.action_assign("#{sym}".to_sym, block)  
           end
+
+          def #{sym}=(p)
+            assert2(p).nil?.or.kind_of?(Proc).or.kind_of?(Method).end
+            action_assign("#{sym}".to_sym, nil)
+          end
+
+          def #{sym}(*args, &block)
+            s = "#{sym}".to_sym
+            if self.has_action?(s) and self.action_assigned?(s)
+              self.action_call("#{sym}".to_sym, *args, &block)
+            end            
+            self.#{sym}!(*args,&block)  
+          end
+          
+          def #{sym}!(*args, &block)
+          end
+        }
+        action_added(sym)
+      end
+      alias action define_action
+
+
+      def remove_action(sym)
+        res = actions.delete(sym)
+        unless res.nil?
+          with self do
+            remove_method(sym)
+            remove_method("#{sym}=".to_sym)
+          end 
+          action_removed(sym)            
         end
+      end
+
+      #
+      # callbacks
+      #
+      def action_added(sym); end
+      def action_removed(sym); end
+      ##
+
+      def inherited(subclass)
+        if has_properties?
+          subclass.properties = self.properties.clone
+        end
+        if has_actions?
+          subclass.actions = self.actions.clone
+        end
+      end  
+
+    end #Class Methods
+
+    ##########
+    # Instance methods
+    ##########    
+    module InstanceMethods
+      # returns a list of defined actions
+      def actions; self.class.actions; end
+
+      # set all the actions to call only the methods of one
+      # delegate object
+      # if obj if nil than resets all the actions to nil
+      def actions=(obj)
+        actions.each { |a| action_assign(a, obj.method(a)) }
+      end
+
+      # return the block/proc/method associated with the action
+      def action(sym); @actions.nil? ? nil : @actions[sym] end
+
+      # associates an action with a proc/block/method
+      def action_assign(sym, proc)
+        (@actions ||= Hash.new)[sym] = proc
+        send! :action_assigned, sym, proc
+      end
+
+      # returns true or false whenever a block/proc/method is
+      # assicated with the action
+      def action_assigned?(sym); not action(sym).nil?; end
+
+      # returns if this object has a given action
+      def has_action?(sym); self.class.has_action?(sym); end
+
+      # callback(s)
+      def action_assigned(sym, block); end
+      def action_unassigned(sym)
+        raise "Action #{sym} not assigned"
+      end
+      def action_missing(sym)
+        raise "Action #{sym} not defined"
+      end
+
+
+      protected
+
+      # executes the action if assigned
+      #
+      # obj.actions[:foo].call
+      def action_call(sym, *args)
+        return action_missing(sym) unless has_action?(sym)
+        action = self.action(sym)
+        return action_unassigned(sym) if action.nil?
+        return instance_exec(*args, &action) 
+      end
       
-        def action(sym)
-          self.actions << sym
+    end # Instance Methods
 
-          self.class_eval %{
-            def #{sym}(*args, &block)
-              self.perform_action("#{sym}".to_sym, *args, &block)
-            end
+  end # Module Actions
 
-            def #{sym}=(p)
-              if p.kind_of?(Proc) or p.kind_of?(Method) then
-                self.set_action("#{sym}".to_sym, p)
-              elsif p.nil?
-                self.set_action("#{sym}".to_sym, nil)
-              else
-                raise "Proc or Method expected"    
-              end
-            end
-          }
-        end
-        
-        def inherited(subclass)
-          subclass.actions = self.actions
-        end
-      end
-    end
+end # Module Inox
 
-
-    # set all the actions to call only the methods of one
-    # delegate object
-    # if obj if nil than resets all the actions to nil
-    def actions=(obj)
-      self.actions.each { |a|
-        if obj.respond_to?(a)
-          self.call_action!(a, assign_method(obj, a))
-        else
-          self.set_action(a, nil)
-        end
-      }
-    end
-
-    # return the block/proc/method associated with the action
-    def get_action(sym)
-      @actions.nil? ? nil : @actions[sym]
-    end
-
-    # associates an action with a proc/block/method
-    def set_action(sym, proc)
-      @actions = Hash.new if @actions.nil?
-      @actions[sym] = proc 
-      if self.respond_to?(:action_assigned) then
-        self.send :action_assigned, sym, proc
-      end
-      return nil
-    end
-
-    # returns true or false whenever a block/proc/method is
-    # assicated with the action
-    def action_assigned?(sym)
-      not get_action(sym).nil?
-    end
-
-    # returns a list of defined actions
-    def actions
-      self.class.actions
-    end
-
-    # returns if this object has a given action
-    def has_action?(sym)
-      not self.actions.index(sym).nil?
-    end
-
-    # executes the action if assigned
-    def call_action(sym, *args)
-      action = self.get_action(sym)
-      action.nil? ? nil : self.instance_exec(*args, &action) 
-    end
-
-    protected
-
-    # used by the metaprogramming to setup the stup method 
-    # for the action
-    def perform_action(sym, *args, &block)
-      case (args.empty? ? 0b0 : 0b1) | (block.nil? ? 0b10 : 0b100)
-      when 0b10 then self.call_action(sym)
-      when 0b100 then self.set_action(sym, block)
-      when 0b11 then self.call_action(sym, *args)
-      when 0b101 then args << block; self.call_action(sym, *args)
-      end
-    end
-
-  end
+# added a default method the Object for introspection
+class Object
+  def self.has_actions?; false; end
+  def has_actions?; self.class.has_actions?; end
 end
 
 

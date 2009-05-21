@@ -16,19 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+require 'singleton'
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+# required if ruby version < 1.9
+if RUBY_VERSION.to_f < 1.9 then
+  IX::import IX::source_file('core/compat/ruby1_8.rb')
+end
 
+IX::import IX::source_file('core/compat/object_extended.rb')
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+IX::import IX::source_file('core/compat/debug.rb')

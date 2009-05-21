@@ -16,12 +16,43 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+#########################################################################  
+# Pre Code
+#
+# Defines the base Classes to be subclassed by a Toolkit
+# other requirements for all the toolkits should be in
+# the pre_code folder
+# Files in the pre_code should be platform agnostic
+#########################################################################  
+IX::import IX::source_files('toolkit/pre_code/*.rb')
 
-if /darwin/ =~ RUBY_PLATFORM then
-    require 'toolkit/cocoa.rb'
+
+#########################################################################  
+# Platform dependent toolkit
+#
+# Try to figure out on which platform we are running
+# try to select the user prefered toolkit for his platform
+# load the platform depended code
+#########################################################################  
+  
+# if /darwin/ =~ RUBY_PLATFORM then
+#     require "#{File.dirname(__FILE__)}/cocoa/cocoa.rb"
+# 
+# else
+#     raise "Platform #{RUBY_PLATFORM} not implmented yet."
+# end
+
+IX::import IX::source_file('toolkit/code/cocoa/cocoa.rb')
+#require "#{File.dirname(__FILE__)}/code/qt/qt.rb"
+IX::import IX::source_file('toolkit/code/ncurses/ix_ncurses.rb')
 
 
-else
-    raise "Platform #{RUBY_PLATFORM} not implmented yet."
-end
-    
+#########################################################################  
+# Post Code
+#
+# The toolkit is loaded and all the class are defined
+# platform agnostic code that extend the functionality of
+# of the toolkit goes here.
+#########################################################################  
+
+IX::import IX::source_files('toolkit/post_code/*.rb')

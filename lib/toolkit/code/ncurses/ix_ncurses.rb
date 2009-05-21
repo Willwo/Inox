@@ -16,19 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+require 'ncurses'
+  
+require "#{File.dirname(__FILE__)}/screen_ncurses.rb"
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+Dir["#{File.dirname(__FILE__)}/*.rb"].each { |f| require f }
 
+BEGIN {
+  $__exit_handlers ||= []
+}
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
+END {
+  $__exit_handlers.each { |code| code.call }
+}
 

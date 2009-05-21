@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-require 'core/size'
+require 'lib/inox'
 include Inox
 
 describe Size do

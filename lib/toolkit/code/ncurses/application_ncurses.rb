@@ -17,18 +17,29 @@
 #++
 
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+module Inox  
+  class Application <  ApplicationBase
+    def native
+      @stdscr
+    end
+    
+    def run
+      @stdscr.getch
+    end
+    
+    
+    def create!
+      self.parent = Screen.instance
+      @stdscr = self.parent.native
+    end
+    
+    def dispose!
 
+    end
+  end
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
+end
 
+# END {
+#   OSX::NSApplication.sharedApplication().run()
+# }

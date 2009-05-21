@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
-require 'core/rect'
+require 'lib/inox'
 include Inox
 
 describe Rect do

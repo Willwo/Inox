@@ -17,18 +17,26 @@
 #++
 
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+module Inox
+  class Application <  ApplicationBase
+    def create
+      @app = Qt::Application.new(ARGV)
+    end
+    
+    def native
+      @app
+    end
+    
+    def run
+      self.native.exec()
+    end
+    
+    def destroy
+      self.native.quit()
+    end
+  end
+end
 
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+# END {
+#   OSX::NSApplication.sharedApplication().run()
+# }

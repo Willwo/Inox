@@ -15,20 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
+require 'qt'
 
+module Inox
+  class Qt::Rect
+    def to_rect
+      self
+    end
+  end
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+  class Qt::Point
+    def to_point
+      self
+    end
+  end
 
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+end
+  
+Dir["#{File.dirname(__FILE__)}/*.rb"].each { |f| require f }

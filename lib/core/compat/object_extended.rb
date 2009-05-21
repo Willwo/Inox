@@ -1,4 +1,3 @@
-#--
 # Copyright © 2009 William Wolf
 # Find documentation at <http://www.ironicwolf.com>
 # 
@@ -14,21 +13,27 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#++
 
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+
+class ::Object
+
+  def with(obj, &code)
+    this = self
+    obj.class.instance_eval { define_method :parent do; this; end }
+    res = obj.kind_of?(Class) ? obj.class_eval(&code) : obj.instance_eval(&code)
+    obj.class.instance_eval { remove_method :parent }
+    obj
+  end
 
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+  def meta_class
+    class << self; self; end
+  end
+  
+  def send!(symbol, *args, &block)
+    if respond_to?(symbol)
+      self.send(symbol, *args, &block)
+    end
+  end
+end

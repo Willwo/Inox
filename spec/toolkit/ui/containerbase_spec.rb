@@ -1,4 +1,3 @@
-#--
 # Copyright © 2009 William Wolf
 # Find documentation at <http://www.ironicwolf.com>
 # 
@@ -14,21 +13,22 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#++
 
+require 'lib/inox'
+include Inox
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
-
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+context 'Inox was required and included' do
+  describe ContainerBase do
+    it "should be kind of Component" do
+      ContainerBase.class.should === Component
+    end
+    
+    it "should have a property frame" do
+      ContainerBase.has_property?(:frame).should be(true)
+    end
+    
+    it "should have an action frameChanged" do
+      ContainerBase.has_action?(:frame_changed).should be(true)
+    end
+  end
+end

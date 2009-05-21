@@ -16,19 +16,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+module Inox
+  class Window < WindowBase
+    def create!      
+    end
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+    def native
+    end
+
+protected    
+    def set_visible(v)
+    end
+    
+    def child_added!(obj)
+      super(obj)
+
+    end
+          
+    def get_title; @window.title.to_s; end
+    def set_title(v); @window.setTitle(v); end
+    def frame_changed!
+      super
+    end
 
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+  end
+end

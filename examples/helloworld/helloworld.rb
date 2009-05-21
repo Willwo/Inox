@@ -15,10 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
-
-require 'inox'
-
-
+require 'lib/inox'
+include Inox
 
 
- 
+application {
+  # w= window {
+  #   title 'test 2'
+  #   
+  #   button {
+  #     title 'Quit'
+  #     frame [10, 10, 96, 32]
+  #     on_clicked { Application.instance.dispose }
+  #   }
+  #   
+  #   button { title 'OK?'; frame [110,10,96,32] }
+  # }
+  # 
+  # 
+  # w.visible = true
+  run
+}
+
+
+

@@ -16,19 +16,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+module Inox
 
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
+  class Window < WindowBase
+    def create      
+     @window = Qt::Widget.new(nil)
+     t = self.class.properties[:title].default
+      with @window do
+        setWindowTitle(t)
+        setGeometry(200, 200, 200,200)
+        show()
+      end
+    end
+
+    def native
+      @window
+    end
+    
+    protected
+    
+    def dispose
+      @window.release
+    end
+    
+    def title_get; @window.windowTitle.to_s; end
+    def title_set(v); @window.setWindowTitle(v); end
+    def frame_changed(f)
+      @window.setGeometry f
+      super
+    end
 
 
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+  end
+end

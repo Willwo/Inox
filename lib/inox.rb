@@ -16,6 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
+# alias old_req require
+# def require(arg)
+#   puts "File #{arg} required"
+#   old_req(arg)
+# end
+
 module Inox  
 #########################################################################
 # Global defined
@@ -23,39 +29,63 @@ module Inox
   
   # Global version of Inox
   INOX_VERSION = '0.0.1'
+  
+  # should point to the lib path of Inox
+  # since we are loading a lot of stuff, we can speed up
+  # by using absolute paths so that require doesn't need
+  # to search through $LOAD_PATH
+  INOX_PATH = File.dirname(__FILE__)
 
+  
+  
+  # strictly use import so the behavior can be
+  # addapted/extended later
+  # if passed a proc it get exectued so we can define handlers
+  # for different kinds of imports
+  def self.import(obj)
+    if obj.kind_of?(Proc)
+      obj.call
+    else
+      require(obj)
+    end
+  end
+  
+  def self.source_file(afile)
+    lambda {
+      import "#{INOX_PATH}/#{afile}"
+    }
+  end
+  
+  def self.source_files(glob)
+    lambda {
+      Dir["#{INOX_PATH}/#{glob}"].each { |f|
+        import f
+      }
+    }
+  end
 
 end #module Inox
 
-
-
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-
-require 'compat/compat.rb'
-  
-  
+IX = Inox  
   
 #########################################################################
 # CORE source
-# This is a platform independent layer of classes introducing the require
-# tools, require by Inox.
+# This is a platform independent layer of classes introducing the required
+# tools for Inox.
 #########################################################################
 
-require 'core/core.rb'  
+IX::import IX::source_file('core/core.rb')
   
   
   
 #########################################################################
 # Toolkit source
-# we define and redefine all the classes in toolkits all over again. 
+# load the toolkit classes
 #########################################################################
 
-require 'toolkit/toolkit.rb'
-  
+# include all definition in the Inox module!
+IX::import IX::source_file('toolkit/toolkit.rb')
+
+
   
   

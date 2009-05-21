@@ -16,19 +16,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #++
 
-
-#########################################################################
-# Compatibility
-# Any compatiblity between different Ruby version and/or OSs goes here.
-# Hacks should be in 'compat/*_hack.rb'
-# NO compatibility tricks allowed in 'core/*.rb' files!!
-#########################################################################
-IX::import IX::source_file('core/compat/compat.rb')
-
-
-#########################################################################
-# The Core
-# include every ruby file in the core directory
-#########################################################################
-IX::import IX::source_files('core/*.rb')
-
+module Inox
+  # special case for application as it doe  # 
+  def application(&block)
+    app = Application.instance
+    with(app, &block)
+    app
+  end
+    
+   def self.define_sugar_for(*syms)
+    syms.each do |sym|
+      class_eval %{ 
+        def #{sym.to_s.downcase.to_sym}(&block)
+          obj = #{sym}.new(self)
+          with(obj, &block)
+          self.add_child(obj) if self.container?
+          obj
+        end
+        }
+    end
+  end
+  
+# define_sugar_for :Window, :Button
+end
